@@ -22,6 +22,12 @@ class Place(gis_models.Model):
 
     created_at = gis_models.DateTimeField(auto_now_add=True)
     updated_at = gis_models.DateTimeField(auto_now=True)
+    class Meta:
+            indexes = [ 
+                 gis_models.Index(fields=['name']),
+                 gis_models.Index(fields=['created_at'])
+            ]
 
     def __str__(self):
         return self.name
+    

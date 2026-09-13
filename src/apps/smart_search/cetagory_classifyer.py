@@ -1,4 +1,3 @@
-from .models import Place
 from pydantic import BaseModel
 from typing import Literal
 from groq import Groq
@@ -41,6 +40,8 @@ def extract_search_intent(message: str):
                 "content": """
 You classify campus search queries.
 
+Return the result as valid JSON.
+
 Choose exactly one category:
 
 academic
@@ -63,6 +64,12 @@ unknown
 
 If the query does not clearly indicate a category,
 return "unknown".
+
+The JSON response must have this format:
+
+{
+    "category": "library"
+}
 """
             },
             {
