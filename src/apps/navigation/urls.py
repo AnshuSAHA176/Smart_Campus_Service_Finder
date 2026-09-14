@@ -1,7 +1,7 @@
 from django.urls import path
-from .views import Test
+from .views import ShortstPathView
 
 
 urlpatterns=[
-    path('',Test.as_view(),name='test')
+    path('',ShortstPathView.as_view(),name='test')
 ]
