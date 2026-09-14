@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     'apps.smart_search',
     "rest_framework",
+    'apps.account'
 ]
 
 MIDDLEWARE = [
