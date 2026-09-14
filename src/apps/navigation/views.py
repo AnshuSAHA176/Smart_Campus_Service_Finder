@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import GraphNode,GraphEdge
 from rest_framework.permissions import AllowAny
-from .serializer import NodeSerializer
+from .serializer import NodeSerializer,NodeReturnSerializer
 from .dijkstra import dijkstra
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
@@ -26,7 +26,7 @@ class ShortstPathView(APIView):
 
         user_point = Point(longitude,latitude,srid=4326)
 
-        destination_point = Point(longitude,latitude,srid=4326)
+        destination_point = Point(destination_longitude,destination_latitude,srid=4326)
 
         near_node = GraphNode.objects.annotate(distance=Distance('location',user_point)).order_by('distance').first()
 
@@ -38,6 +38,7 @@ class ShortstPathView(APIView):
 
 
         node = GraphNode.objects.prefetch_related('outgoing_edges','incoming_edges')
+
         serializer = NodeSerializer(node,many = True)
 
         graph = {
@@ -51,17 +52,24 @@ class ShortstPathView(APIView):
         path, distance = dijkstra(
                 graph,
                 near_node.id,
-                near_destination_node
+                near_destination_node.id
             )
 
-        print(path)
-        print(distance)
+        nodes = GraphNode.objects.in_bulk(path)
+
+        route = [
+            {
+                "node": node_id,
+                "latitude": nodes[node_id].location.y,
+                "longitude": nodes[node_id].location.x,
+            }
+            for node_id in path
+        ]
 
         return Response({
             
-            "path":path,
-            'distance':distance
-
+            'distance':distance,
+            "path":route
             
         })
 

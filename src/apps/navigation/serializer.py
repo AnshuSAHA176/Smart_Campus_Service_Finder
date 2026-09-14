@@ -22,3 +22,7 @@ class NodeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class NodeReturnSerializer(serializers.ModelSerializer):
+    class Meta:
+            model = GraphNode
+            fields = "__all__"
