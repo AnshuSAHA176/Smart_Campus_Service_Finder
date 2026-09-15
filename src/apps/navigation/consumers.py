@@ -2,7 +2,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from .models import GraphNode
 from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point,LineString
 from django.core.cache import cache
 
 
@@ -32,29 +32,56 @@ class LiveLocationConsumer(AsyncWebsocketConsumer):
             )
 
     async def receive(self, text_data=None, bytes_data=None):
+
+        # Get current navigation route
         cache_key = f"navigation_route:{self.user.id}"
 
         route_data = cache.get(cache_key)
 
-        path = route_data["path"]
+        if not route_data:
+            await self.send(
+                text_data=json.dumps({
+                    "type": "navigation_status",
+                    "status": "no_route",
+                    "message": "No active navigation route found."
+                })
+            )
+            return
 
+        # Get route geometry from cache
+        route_geometry = route_data["route_geometry"]
+
+        # Create LineString
+        route_line = LineString(
+            route_geometry,
+            srid=4326
+        )
+
+        # Get frontend GPS data
         data = json.loads(text_data)
 
+        # IMPORTANT: longitude first
         user_point = Point(
             data["longitude"],
             data["latitude"],
             srid=4326
         )
 
-        node_id = [item['node'] for item in path]
+        # Calculate distance from user to route
+        distance = user_point.distance(route_line)
 
-        node = (GraphNode.objects.filter(id__in = node_id)
-                .annotate(distance = Distance('location',user_point)).order_by('distance').first()
-                )
+        print("Distance from route:", distance)
+
+        # Your monitoring logic
         monitor_key = f"navigation_monitor:{self.user.id}"
-        
-        if node.distance.m <= 10:
-            cache.set(monitor_key, 0, timeout=60)
+
+        if distance <= 10:
+
+            cache.set(
+                monitor_key,
+                0,
+                timeout=60
+            )
 
             message = {
                 "type": "navigation_status",
@@ -62,23 +89,51 @@ class LiveLocationConsumer(AsyncWebsocketConsumer):
                 "message": "You are following the planned route."
             }
 
-        elif node.distance.m < 20:
-                cache.set(monitor_key, 0, timeout=60)
+        elif distance < 20:
+
+            cache.set(
+                monitor_key,
+                0,
+                timeout=60
+            )
+
+            message = {
+                "type": "navigation_status",
+                "status": "uncertain",
+                "message": "Checking your location..."
+            }
+
+        else:
+
+            monitor_data = cache.get(
+                monitor_key,
+                0
+            )
+
+            monitor_data += 1
+
+            cache.set(
+                monitor_key,
+                monitor_data,
+                timeout=60
+            )
+
+            if monitor_data >= 6:
 
                 message = {
                     "type": "navigation_status",
-                    "status": "uncertain",
+                    "status": "off_route",
+                    "message": "You appear to be off the planned route."
+                }
+
+            else:
+
+                message = {
+                    "type": "navigation_status",
+                    "status": "checking",
                     "message": "Checking your location..."
                 }
 
-        else:
-                monitor_data = cache.get(monitor_key, 0)
-                monitor_data += 1
-                cache.set(monitor_key, monitor_data, timeout=60)
-
-                if monitor_data >= 6:
-                    message = {
-                        "type": "navigation_status",
-                        "status": "off_route",
-                        "message": "You appear to be off the planned route."
-                    }
+        await self.send(
+            text_data=json.dumps(message)
+        )
