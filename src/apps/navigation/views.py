@@ -6,7 +6,7 @@ from .serializer import NodeSerializer,NodeReturnSerializer
 from .dijkstra import dijkstra
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
-
+from django.core.cache import cache
 class ShortstPathView(APIView):
     permission_classes = [AllowAny]
     def post(self,request):
@@ -65,16 +65,23 @@ class ShortstPathView(APIView):
             }
             for node_id in path
         ]
-
-        return Response({
-            
-            'distance':distance,
-            "path":route
-            
-        })
-
-
     
+        data = {
+        "distance": distance,
+        "path": route,
+        "route_geometry": [
+            (item["longitude"], item["latitude"])
+            for item in route
+        ],
+    }
+        cache_key = f"navigation_route:{request.user.id}"
+            
+        cache.set(cache_key,data)
+
+        return Response(data)
+
+
+        
 
 
 
