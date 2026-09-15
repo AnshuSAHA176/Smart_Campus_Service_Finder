@@ -3,10 +3,7 @@ import heapq
 
 
 def dijkstra(graph,start,destination):
-    print("GRAPH:", graph)
-    print("GRAPH KEYS:", graph.keys())
-    print("START:", start)
-    print("DESTINATION:", destination)
+
 
     distance = {
         node : float('inf')

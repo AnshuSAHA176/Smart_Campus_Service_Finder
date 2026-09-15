@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     'apps.smart_search',
     "rest_framework",
+    'drf_spectacular',
+
     'apps.account',
     'apps.navigation',
 ]
@@ -146,7 +148,8 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 
@@ -172,3 +175,33 @@ CHANNEL_LAYERS = {
 }
 
 AUTH_USER_MODEL= 'account.User'
+
+SPECTACULAR_SETTINGS = {
+
+    "TITLE": "Smart Campus Search Service",
+
+    "DESCRIPTION": """
+Smart Campus Search Service is an AI-powered campus discovery and navigation API.
+
+The service allows users to search for campus locations using natural language
+and semantic search, retrieve location information, and generate optimal
+walking routes between campus locations.
+
+Key capabilities include:
+
+• AI-powered semantic location search using vector embeddings
+• Campus place discovery and location details
+• Graph-based shortest path calculation
+• Walking route generation using A* pathfinding
+• Real-time navigation and live location tracking
+• Off-route detection and route monitoring
+• Automatic route recalculation when the user leaves the planned path
+• Redis-powered temporary navigation sessions
+• PostGIS-powered geospatial operations
+""",
+
+    "VERSION": "1.0.0",
+
+    "SERVE_INCLUDE_SCHEMA": False,
+
+}
