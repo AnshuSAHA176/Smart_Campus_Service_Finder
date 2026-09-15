@@ -36,6 +36,6 @@ class LoginSerializer(serializers.Serializer):
 
         attrs['user'] = user
 
-        return user
+        return attrs
 
 
