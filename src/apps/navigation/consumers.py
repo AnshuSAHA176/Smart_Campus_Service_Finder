@@ -178,9 +178,8 @@ class LiveLocationConsumer(AsyncWebsocketConsumer):
                                 order_by('distance').first()
 
                                 )
-                destination_data = cache.get(f'destination_data {self.user.id}')
-                if not destination_data:
-                        return
+                
+                
 
                 path, distance = dijkstra(
                         destination_data['graph'],
