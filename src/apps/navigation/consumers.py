@@ -4,7 +4,7 @@ from .models import GraphNode
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point,LineString
 from django.core.cache import cache
-
+from .dijkstra import dijkstra
 
 class LiveLocationConsumer(AsyncWebsocketConsumer):
 
@@ -125,6 +125,52 @@ class LiveLocationConsumer(AsyncWebsocketConsumer):
                     "status": "off_route",
                     "message": "You appear to be off the planned route."
                 }
+                nearest_node = (GraphNode.objects.annotate(distance = Distance('location',user_point)).
+                                order_by('distance').first()
+
+                                )
+                destination_data = cache.get(f'destination_data {self.user.id}')
+                if not destination_data:
+                        return
+
+                path, distance = dijkstra(
+                        destination_data['graph'],
+                        start=nearest_node.id,
+                        destination=destination_data['destination_node']
+                    )
+                if not path:
+                    return
+
+                nodes = GraphNode.objects.in_bulk(path)
+                route = [
+                                {
+                                    "node": node_id,
+                                    "latitude": nodes[node_id].location.y,
+                                    "longitude": nodes[node_id].location.x,
+                                }
+                                for node_id in path
+                            ]
+                        
+                data = {
+                            "distance": distance,
+                            "path": route,
+                            "route_geometry": [
+                                (item["longitude"], item["latitude"])
+                                for item in route
+                            ],
+                        }
+                cache_key = f"navigation_route:{self.user.id}"
+
+                cache.set(
+                    cache_key,
+                    data,        #it can overwrite the existing value
+                    timeout=300
+                )
+
+                await self.send(
+                    text_data=json.dumps(data)
+                )
+
 
             else:
 

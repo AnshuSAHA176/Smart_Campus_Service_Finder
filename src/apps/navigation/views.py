@@ -32,7 +32,7 @@ class ShortstPathView(APIView):
 
         near_destination_node = GraphNode.objects.annotate(distance=Distance('location',destination_point)).order_by('distance').first()
 
-
+        
 
 
 
@@ -48,6 +48,9 @@ class ShortstPathView(APIView):
                     ]
             for data in serializer.data
         }
+
+        cache.set(f'destination_data {request.user}',
+                  {"destination_node":near_destination_node.id,"graph":graph})
 
         path, distance = dijkstra(
                 graph,
