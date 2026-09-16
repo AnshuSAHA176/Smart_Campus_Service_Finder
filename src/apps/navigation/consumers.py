@@ -48,6 +48,53 @@ class LiveLocationConsumer(AsyncWebsocketConsumer):
             )
             return
 
+        destination_data = cache.get(f'destination_data {self.user.id}')
+
+        if not destination_data:
+               return
+
+        destination = GraphNode.objects.filter(
+            id = destination_data['destination_node']
+        ).annotate(distance = Distance('location',user_point)).first()
+
+        if not destination:
+            return 
+
+        ARRIVAL_RADIUS = 10  # meters
+
+        if destination.distance.m <= ARRIVAL_RADIUS:
+
+            message = {
+                "type": "navigation_status",
+                "status": "arrived",
+                "message": "You have reached your destination."
+            }
+
+            # Send arrival message
+            await self.send(
+                text_data=json.dumps(message)
+            )
+
+            # Remove active navigation data
+            cache.delete(
+                f"navigation_route:{self.user.id}"
+            )
+
+            cache.delete(
+                f"destination_data {self.user.id}"
+            )
+
+            cache.delete(
+            f"navigation_monitor:{self.user.id}"
+        )
+            return
+
+
+
+
+
+        
+
         # Get route geometry from cache
         route_geometry = route_data["route_geometry"]
 
@@ -125,6 +172,8 @@ class LiveLocationConsumer(AsyncWebsocketConsumer):
                     "status": "off_route",
                     "message": "You appear to be off the planned route."
                 }
+
+                await self.send(text_data=json.dumps(message))
                 nearest_node = (GraphNode.objects.annotate(distance = Distance('location',user_point)).
                                 order_by('distance').first()
 
@@ -183,3 +232,4 @@ class LiveLocationConsumer(AsyncWebsocketConsumer):
         await self.send(
             text_data=json.dumps(message)
         )
+
