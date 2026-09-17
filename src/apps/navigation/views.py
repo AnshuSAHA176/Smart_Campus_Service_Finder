@@ -46,7 +46,7 @@ class ShortstPathView(APIView):
             for data in serializer.data
         }
 
-        cache.set(f'destination_data {request.user}',
+        cache.set(f'destination_data {request.user.id}',
                   {"destination_node":near_destination_node.id,"graph":graph})
 
         path, distance = dijkstra(
