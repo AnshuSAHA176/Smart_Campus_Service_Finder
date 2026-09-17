@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from django.contrib.gis.db.models.functions import Distance
 from pgvector.django import CosineDistance
 from .embbeding import create_embedding,embedding_model
-from rest_framework.permissions import AllowAny,IsAdminUser
+from rest_framework.permissions import AllowAny,IsAdminUser,IsAuthenticated
 from .models import Place
 from rest_framework import generics
 from rest_framework.response import Response
@@ -12,7 +12,7 @@ from .serializer import PlaceSerializer,CurdSerializer
 from rest_framework import pagination
 
 class SearchPlacesView(APIView):
-    permission_classes=[AllowAny]
+    permission_classes=[IsAuthenticated]
 
     def post(self,request):
         message = request.data.get("message")
@@ -102,21 +102,20 @@ class SearchPlacesView(APIView):
             reverse=True
         )
         results = result[:5]
-        data = []
-        for item in results:
-            place = item["place"]
-
-            data.append({
-                "id": place.id,
-                "name": place.name,
-                "description": place.description,
-                "category": place.category,
+       
+        data = [ {
+                "id":item['place'].id,
+                "name":item['place'].name,
+                "description": item['place'].description,
+                "category":item['place'].category,
                 "semantic_score": item["semantic_score"],
                 "geo_score": item["geo_score"],
                 "final_score": item["final_score"],
-                "distance": place.geo_distance.m,
-            })
-
+                "distance":item['place'].geo_distance.m,
+            }
+            for item in results
+            ]
+    
 
         return Response(
             data
@@ -141,4 +140,6 @@ class PlaceCurdView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'pk'
     lookup_url_kwarg = 'pk'
     serializer_class=CurdSerializer
-   
+
+
+

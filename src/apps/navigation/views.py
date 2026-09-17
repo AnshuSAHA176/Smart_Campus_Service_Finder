@@ -1,21 +1,18 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import GraphNode,GraphEdge
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny,IsAuthenticated
 from .serializer import NodeSerializer,NodeReturnSerializer
 from .dijkstra import dijkstra
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django.core.cache import cache
-class ShortstPathView(APIView):
-    permission_classes = [AllowAny]
-    def post(self,request):
 
-        {
-  "latitude": 25.605123,
-  "longitude": 88.128745,
-  "accuracy": 8.5
-}       
+
+class ShortstPathView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self,request):
+     
         latitude = request.data.get('latitude')
 
         longitude = request.data.get('longitude')
