@@ -1,13 +1,10 @@
-from sentence_transformers import SentenceTransformer
+
+import os
+import requests
 
 
-MODEL_NAME = "BAAI/bge-m3"
-
-model = SentenceTransformer(
-    MODEL_NAME,
-    device="cpu",
-)
-
+ACCOUNT_ID = os.environ.get('ACCOUNT_ID')
+AUTH_TOKEN = os.environ.get('AUTH_TOKEN')
 
 def embedding_model(text: str) -> list[float]:
     """
@@ -15,14 +12,16 @@ def embedding_model(text: str) -> list[float]:
     """
     if not text or not text.strip():
         raise ValueError("Text cannot be empty.")
+    response = requests.post(
+  f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai/run/@cf/baai/bge-m3",
+  headers={"Authorization": f"Bearer {AUTH_TOKEN}"},
+  json={"text": text}
+)
 
-    embedding = model.encode(
-        text.strip(),
-        normalize_embeddings=True,
-        convert_to_numpy=True,
-    )
+   
+    
 
-    return embedding.tolist()
+    return response.json()['result']['data'][0]
 
 
 def create_embedding(title: str, description: str,category:str) -> list[float]:
@@ -37,6 +36,9 @@ def create_embedding(title: str, description: str,category:str) -> list[float]:
     )
 
     return embedding_model(text)
+
+
+
 
 
 

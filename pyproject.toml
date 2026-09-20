@@ -21,7 +21,9 @@ dependencies = [
     "psycopg2>=2.9.13",
     "pydantic>=2.13.5",
     "pydentic>=0.0.1.dev3",
+    "python-dotenv>=0.9.9",
     "redis>=5.2,<6",
+    "requests>=2.34.2",
     "sentence-transformers>=6.0.1",
 ]
 
