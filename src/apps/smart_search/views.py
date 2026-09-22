@@ -19,7 +19,7 @@ class SearchPlacesView(APIView):
         lng = request.data.get("longitude")
         lat = request.data.get("latitude")
 
-        if not message:
+        if not isinstance(message,str) or not message.strip():
             return Response(
                 {"error": "message is required"},
                 status=400
