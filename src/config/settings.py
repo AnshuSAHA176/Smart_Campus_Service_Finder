@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'apps.smart_search',
     "rest_framework",
     'drf_spectacular',
-
+    'rest_framework_simplejwt.token_blacklist',
     'apps.account',
     'apps.navigation',
 ]
